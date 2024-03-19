@@ -1,0 +1,91 @@
+
+//+------------------------------------------------------------------+
+//|                                                    RSI Signals Indicator of RSI Oscillator |
+//|                                 Copyright © 2021 forexroboteasy.com |
+//|                                                      Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+#property copyright 'Copyright © 2021 forexroboteasy.com'
+#property link      'forexroboteasy.com'
+
+#property indicator_chart_window
+#property indicator_buffers 2
+#property indicator_color1 Green
+#property indicator_color2 Red
+
+// Input parameters
+input ENUM_APPLIED_PRICE AppliedPrice=PRICE_CLOSE; // Applied price type
+input int RsiPeriod = 14; // RSI period
+input int OverboughtLevel = 70; // Overbought level
+input int OversoldLevel = 30; // Oversold level
+
+// Indicator buffers
+double RsiBuffer[];
+double SignalBuffer[];
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Set indicator buffers
+    SetIndexBuffer(0, RsiBuffer, INDICATOR_DATA);
+    SetIndexBuffer(1, SignalBuffer, INDICATOR_DATA);
+
+    // Set indicator line labels
+    IndicatorSetString(INDICATOR_SHORTNAME, 'RSI Signals Indicator');
+
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator deinitialization function                       |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Clean up buffers
+    ArrayResize(RsiBuffer, 0);
+    ArrayResize(SignalBuffer, 0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int OnCalculate(const int rates_total,
+                const int prev_calculated,
+                const datetime &time[],
+                const double &open[],
+                const double &high[],
+                const double &low[],
+                const double &close[],
+                const long &tick_volume[],
+                const long &volume[],
+                const int &spread[])
+{
+    // Calculate RSI values
+    ArraySetAsSeries(close, true);
+    ArraySetAsSeries(RsiBuffer, true);
+    int limit = rates_total - prev_calculated;
+    for (int i = 0; i < limit; i++)
+    {
+        RsiBuffer[i] = iRSI(Symbol(), 0, RsiPeriod, AppliedPrice, i);
+    }
+
+    // Calculate signals
+    for (int i = 0; i < limit; i++)
+    {
+        if (RsiBuffer[i] > OverboughtLevel)
+        {
+            SignalBuffer[i] = 1; // Overbought signal
+        }
+        else if (RsiBuffer[i] < OversoldLevel)
+        {
+            SignalBuffer[i] = -1; // Oversold signal
+        }
+        else
+        {
+            SignalBuffer[i] = 0; // No signal
+        }
+    }
+
+    return(rates_total);
+}
